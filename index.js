@@ -1,26 +1,31 @@
 const fs = require('fs-extra');
 const path = require('path');
 
+// 个人信息配置
+const USER_CONFIG = {
+    title: "项目导航",
+    username: "VarleyT",
+    // 自动获取 GitHub 头像
+    avatar: "https://github.com/VarleyT.png", 
+    bio: "嵌入式工程师 | Python & C 开发者", 
+    github: "https://github.com/VarleyT"
+};
+
 async function generate() {
     console.log('开始构建流程...');
 
-    // 1. 确保输出目录存在
     await fs.ensureDir('public');
-
-    // 2. 读取站点数据
     const sites = await fs.readJson('sites.json');
 
-    // 3. 处理图标文件 (favicon.ico)
+    // 图标处理
     const faviconFile = 'favicon.ico';
     let hasFavicon = false;
-
     if (await fs.pathExists(faviconFile)) {
         await fs.copy(faviconFile, path.join('public', 'favicon.ico'));
         hasFavicon = true;
-        console.log('已成功拷贝图标文件：favicon.ico');
     }
 
-    // 4. 构建 HTML 列表
+    // 站点卡片构建
     const listItems = sites.map(site => `
         <a href="${site.url}" target="_blank" class="card-link">
             <div class="card">
@@ -29,43 +34,134 @@ async function generate() {
                     <p>${site.desc}</p>
                 </div>
                 <div class="card-footer">
-                    <span>访问直达</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    <span>进入站点</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </div>
             </div>
         </a>
     `).join('');
 
-    // 5. HTML 模板
+    // 完整的 HTML 模板
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="zh-CN">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>我的项目导航</title>
+        <title>${USER_CONFIG.title} - ${USER_CONFIG.username}</title>
         ${hasFavicon ? '<link rel="icon" href="favicon.ico" type="image/x-icon">' : ''}
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
         <style>
-            /* 这里保留之前的深色主题 CSS 样式... */
-            :root { --bg-color: #0f172a; --card-bg: #1e293b; --text-primary: #f8fafc; --text-secondary: #94a3b8; --accent-color: #38bdf8; }
-            body { font-family: sans-serif; background: var(--bg-color); color: var(--text-primary); padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
-            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; width: 100%; max-width: 1200px; }
-            .card { background: var(--card-bg); padding: 24px; border-radius: 16px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); }
-            .card:hover { transform: translateY(-5px); border-color: var(--accent-color); }
+            :root {
+                --bg-color: #0b0f1a;
+                --card-bg: #161b22;
+                --text-main: #e6edf3;
+                --text-dim: #8b949e;
+                --accent: #2f81f7;
+                --border: #30363d;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+                font-family: 'Inter', -apple-system, system-ui, sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-main);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 60px 20px;
+                min-height: 100vh;
+            }
+
+            /* 个人信息栏样式 */
+            .profile {
+                text-align: center;
+                margin-bottom: 50px;
+            }
+            .avatar {
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                border: 3px solid var(--accent);
+                padding: 3px;
+                margin-bottom: 15px;
+            }
+            .profile h1 {
+                font-size: 2rem;
+                letter-spacing: -0.5px;
+                margin-bottom: 8px;
+            }
+            .profile .username {
+                color: var(--accent);
+                font-weight: 600;
+                font-size: 1.1rem;
+                margin-bottom: 12px;
+                display: block;
+            }
+            .profile p {
+                color: var(--text-dim);
+                max-width: 400px;
+                font-size: 0.95rem;
+            }
+
+            /* 容器与网格 */
+            .container { width: 100%; max-width: 1000px; }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+            }
+
+            /* 卡片样式 */
             .card-link { text-decoration: none; color: inherit; }
-            h1 { margin-bottom: 40px; background: linear-gradient(to right, #fff, var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+            .card {
+                background: var(--card-bg);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 24px;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                transition: transform 0.2s, border-color 0.2s;
+            }
+            .card:hover {
+                transform: translateY(-4px);
+                border-color: var(--accent);
+            }
+            .card h3 { margin-bottom: 10px; font-size: 1.2rem; }
+            .card p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5; }
+            .card-footer {
+                display: flex;
+                align-items: center;
+                color: var(--accent);
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+            .card-footer svg { margin-left: 5px; }
+
+            @media (max-width: 600px) {
+                body { padding: 40px 15px; }
+                .profile h1 { font-size: 1.7rem; }
+            }
         </style>
     </head>
     <body>
-        <h1>项目导航</h1>
-        <div class="grid">${listItems}</div>
+        <div class="profile">
+            <img src="${USER_CONFIG.avatar}" alt="Avatar" class="avatar">
+            <h1>${USER_CONFIG.title}</h1>
+            <span class="username">@${USER_CONFIG.username}</span>
+            <p>${USER_CONFIG.bio}</p>
+        </div>
+
+        <main class="container">
+            <div class="grid">${listItems}</div>
+        </main>
     </body>
     </html>
     `;
 
-    // 6. 写入文件
     await fs.writeFile(path.join('public', 'index.html'), htmlContent);
-    console.log('构建完成：public/index.html');
+    console.log('中转站页面构建成功！');
 }
 
 generate();
