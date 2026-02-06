@@ -1,20 +1,39 @@
 const fs = require('fs-extra');
 const path = require('path');
+const https = require('https');
 
 // 个人信息配置
 const USER_CONFIG = {
-    title: "项目导航",
+    title: "项目导航 - VarleyT",
     username: "VarleyT",
-    // 自动获取 GitHub 头像
-    avatar: "https://github.com/VarleyT.png", 
-    bio: "嵌入式工程师 | Python & C 开发者", 
-    github: "https://github.com/VarleyT"
+    avatar: "https://github.com/VarleyT.png",
+    // 职业标签（参考你的嵌入式背景）
+    bio: "嵌入式系统工程师 | Python & C 开发者" 
 };
+
+// 获取每日一句的辅助函数
+function getDailyQuote() {
+    return new Promise((resolve) => {
+        https.get('https://v1.hitokoto.cn/?c=i&c=k', (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const { hitokoto, from } = JSON.parse(data);
+                    resolve(`${hitokoto} —— 《${from}》`);
+                } catch (e) {
+                    resolve("保持热爱，奔赴山海。");
+                }
+            });
+        }).on('error', () => resolve("代码是写给人看的，附带能在机器上运行。"));
+    });
+}
 
 async function generate() {
     console.log('开始构建流程...');
-
     await fs.ensureDir('public');
+    
+    const dailyQuote = await getDailyQuote();
     const sites = await fs.readJson('sites.json');
 
     // 图标处理
@@ -25,7 +44,6 @@ async function generate() {
         hasFavicon = true;
     }
 
-    // 站点卡片构建
     const listItems = sites.map(site => `
         <a href="${site.url}" target="_blank" class="card-link">
             <div class="card">
@@ -41,16 +59,14 @@ async function generate() {
         </a>
     `).join('');
 
-    // 完整的 HTML 模板
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="zh-CN">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${USER_CONFIG.title} - ${USER_CONFIG.username}</title>
+        <title>${USER_CONFIG.title}</title>
         ${hasFavicon ? '<link rel="icon" href="favicon.ico" type="image/x-icon">' : ''}
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
         <style>
             :root {
                 --bg-color: #0b0f1a;
@@ -62,106 +78,93 @@ async function generate() {
             }
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body {
-                font-family: 'Inter', -apple-system, system-ui, sans-serif;
-                background-color: var(--bg-color);
-                color: var(--text-main);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                padding: 60px 20px;
-                min-height: 100vh;
+                font-family: -apple-system, system-ui, sans-serif;
+                background-color: var(--bg-color); color: var(--text-main);
+                display: flex; flex-direction: column; align-items: center;
+                padding: 60px 20px; min-height: 100vh;
             }
 
-            /* 个人信息栏样式 */
-            .profile {
-                text-align: center;
-                margin-bottom: 50px;
-            }
-            .avatar {
-                width: 100px;
-                height: 100px;
-                border-radius: 50%;
-                border: 3px solid var(--accent);
-                padding: 3px;
-                margin-bottom: 15px;
-            }
-            .profile h1 {
-                font-size: 2rem;
-                letter-spacing: -0.5px;
-                margin-bottom: 8px;
-            }
-            .profile .username {
-                color: var(--accent);
-                font-weight: 600;
-                font-size: 1.1rem;
-                margin-bottom: 12px;
-                display: block;
-            }
-            .profile p {
-                color: var(--text-dim);
-                max-width: 400px;
-                font-size: 0.95rem;
-            }
-
-            /* 容器与网格 */
-            .container { width: 100%; max-width: 1000px; }
-            .grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                gap: 20px;
-            }
-
-            /* 卡片样式 */
-            .card-link { text-decoration: none; color: inherit; }
-            .card {
-                background: var(--card-bg);
-                border: 1px solid var(--border);
+            .profile { text-align: center; margin-bottom: 50px; }
+            .avatar { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--accent); padding: 3px; margin-bottom: 15px; }
+            .profile h1 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 700; }
+            .username { color: var(--accent); font-weight: 600; margin-bottom: 25px; display: block; font-size: 1.1rem; }
+            
+            /* 每日一句打字机样式 */
+            .quote-container {
+                min-height: 50px;
+                max-width: 650px;
+                margin: 0 auto 40px;
+                padding: 15px 25px;
+                background: rgba(47, 129, 247, 0.05);
                 border-radius: 12px;
-                padding: 24px;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                transition: transform 0.2s, border-color 0.2s;
-            }
-            .card:hover {
-                transform: translateY(-4px);
-                border-color: var(--accent);
-            }
-            .card h3 { margin-bottom: 10px; font-size: 1.2rem; }
-            .card p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5; }
-            .card-footer {
+                border: 1px dashed var(--border);
                 display: flex;
                 align-items: center;
+                justify-content: center;
+            }
+            #typewriter {
+                color: var(--text-dim);
+                font-family: "SFMono-Regular", Consolas, monospace;
+                font-size: 1rem;
+                line-height: 1.6;
+                text-align: center;
+            }
+            #typewriter::after {
+                content: '_';
+                animation: blink 1s infinite;
                 color: var(--accent);
-                font-size: 0.85rem;
-                font-weight: 600;
+                font-weight: bold;
             }
-            .card-footer svg { margin-left: 5px; }
+            @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-            @media (max-width: 600px) {
-                body { padding: 40px 15px; }
-                .profile h1 { font-size: 1.7rem; }
-            }
+            .container { width: 100%; max-width: 1000px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+            .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: 0.3s; height: 100%; }
+            .card:hover { transform: translateY(-4px); border-color: var(--accent); background: #1c2128; }
+            .card-link { text-decoration: none; color: inherit; }
+            .card h3 { margin-bottom: 12px; font-size: 1.2rem; }
+            .card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.5; }
+            .card-footer { margin-top: 20px; color: var(--accent); font-weight: 600; display: flex; align-items: center; font-size: 0.85rem; }
+            .card-footer svg { margin-left: 6px; }
         </style>
     </head>
     <body>
         <div class="profile">
             <img src="${USER_CONFIG.avatar}" alt="Avatar" class="avatar">
-            <h1>${USER_CONFIG.title}</h1>
+            <h1>项目导航</h1>
             <span class="username">@${USER_CONFIG.username}</span>
-            <p>${USER_CONFIG.bio}</p>
+            
+            <div class="quote-container">
+                <p id="typewriter"></p>
+            </div>
         </div>
 
         <main class="container">
             <div class="grid">${listItems}</div>
         </main>
+
+        <script>
+            // 由 Node.js 构建时注入的今日名言
+            const quote = ${JSON.stringify(dailyQuote)};
+            let i = 0;
+            const speed = 100; // 打字速度（毫秒）
+
+            function typeWriter() {
+                if (i < quote.length) {
+                    document.getElementById("typewriter").innerHTML += quote.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, speed);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', typeWriter);
+        </script>
     </body>
     </html>
     `;
 
     await fs.writeFile(path.join('public', 'index.html'), htmlContent);
-    console.log('中转站页面构建成功！');
+    console.log('构建成功：项目导航 - VarleyT (带打字机名言)');
 }
 
 generate();
