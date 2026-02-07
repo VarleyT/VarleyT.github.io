@@ -3,5 +3,10 @@
         "name": "Github 每日热点项目",
         "desc": "每天更新 Github 上的热门项目",
         "url": "https://varleyt.github.io/site/"
+    },
+    {
+        "name": "Epic 每周免费游戏",
+        "desc": "每周更新 Epic 上的免费游戏",
+        "url": "https://varleyt.github.io/epic/"
     }
 ]
