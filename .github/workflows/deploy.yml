@@ -5,13 +5,10 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:
   push:
-    branches:
-      - main
     paths:
       - 'index.js'
       - 'sites.json'
       - 'package.json'
-      - 'monthly.log'
       - '.github/workflows/deploy.yml'
 
 jobs:
